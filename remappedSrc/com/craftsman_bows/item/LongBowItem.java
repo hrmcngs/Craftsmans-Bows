@@ -1,137 +1,103 @@
 package com.craftsman_bows.item;
 
+import com.craftsman_bows.interfaces.item.CanSprintWhileUsing;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
 import com.craftsman_bows.init.ModSoundEvents;
-import com.craftsman_bows.interfaces.item.ZoomItem;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ArrowEntity;
-import net.minecraft.entity.projectile.PersistentProjectileEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.item.*;
-import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Hand;
-import net.minecraft.util.ActionResult;
-import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LongBowItem
-        extends CraftsmanBowItem implements ZoomItem {
-
-    public LongBowItem(net.minecraft.item.Item.Settings settings) {
-        super(settings);
+public class ShortBowItem extends CraftsmanBowItem implements CanSprintWhileUsing {
+    public ShortBowItem(Item.Properties properties) {
+        super(properties);
     }
 
-    float fov;
-
-    // 弓を引いた時間を取得する処理
+    // 弓を引いた時間を取得する処理のようだ。今回は書き換えて、0.55以上引き絞ったら強制的に1（フルチャージ）になるようにした
     public static float getPullProgress(int useTicks) {
-        float f = (float) useTicks / 30.0F;
-        f = (f * f + f * 2.0F) / 3.0F;
-        if (f > 1.0F) {
-            f = 1.0F;
+        float f = (float) useTicks / 20.0f;
+        if ((f = (f * f + f * 2.0f) / 3.0f) > 0.55f) {
+            f = 1f;
         }
         return f;
     }
 
-    // 最初の使用時のアクション
-    @Override
-    public ActionResult use(World world, PlayerEntity user, Hand hand) {
-        ItemStack itemStack = user.getStackInHand(hand);
-        boolean bl = !user.getProjectileType(itemStack).isEmpty();
-        if (!user.isInCreativeMode() && !bl) {
-            return ActionResult.FAIL;
-        } else {
-            user.setCurrentHand(hand);
-            user.playSound(ModSoundEvents.DUNGEONS_BOW_LOAD, 1.0f, 1.0f);
-            fov = 1f;
-            return ActionResult.CONSUME;
-        }
-    }
-
     // アイテムを使用しているときの処理
     @Override
-    public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-        int i = this.getMaxUseTime(stack, user) - remainingUseTicks;
-
-        // 途中が寂しいので…
-        if (i == 10) {
-            user.playSound(SoundEvents.ITEM_CROSSBOW_LOADING_MIDDLE.value(), 1.0f, 1.2f);
-        }
+    public void onUseTick(Level level, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+        int i = this.getUseDuration(stack) - remainingUseTicks;
 
         // チャージ中
-        if (i < 29) {
-            chargingParticle(world, user);  // パーティクル生成の処理
+        if (i < 10) {
+            chargingParticle(level, user);
         }
 
         // チャージ完了
-        if (i == 29) {
-            chargeEndParticle(world, user);
-            user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_1, 1.0f, 1.0f);
-            user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_4, 1.0f, 1.2f);
+        if (i == 10) {
+            chargeEndParticle(level, user);
+            user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_1, 1.0f, 1.4f);
         }
+    }
 
-        // ズーム処理
-        fov = 1.0f - getPullProgress(i) / 3f;
+    // 最初の使用時のアクション
+    @Override
+    public InteractionResult use(Level level, Player user, InteractionHand hand) {
+        ItemStack itemStack = user.getItemInHand(hand);
+        boolean bl = !user.getProjectile(itemStack).isEmpty();
+        if (!user.getAbilities().instabuild && !bl) {
+            return InteractionResult.FAIL;
+        } else {
+            user.playSound(ModSoundEvents.DUNGEONS_BOW_LOAD, 1.0f, 1.2f);
+            user.startUsingItem(hand);
+            return InteractionResult.CONSUME;
+        }
     }
 
     // 使用をやめたとき、つまりクリックを離したときの処理だ。
     @Override
-    public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
-        if (!(user instanceof PlayerEntity playerEntity)) {
-            return false;
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity user, int remainingUseTicks) {
+        if (!(user instanceof Player player)) {
+            return;
         }
 
-        fov = Float.NaN;
-
         // プレイヤーを定義する処理のようだ。後は…手持ちの矢の種類を取得する処理？
-        ItemStack itemStack = playerEntity.getProjectileType(stack);
+        ItemStack itemStack = player.getProjectile(stack);
         if (itemStack.isEmpty()) {
-            return false;
+            return;
         }
 
         // 使用時間0.1未満では使用をキャンセルする処理のようだ
-        int i = this.getMaxUseTime(stack, user) - remainingUseTicks;
+        int i = this.getUseDuration(stack) - remainingUseTicks;
         float f = getPullProgress(i);
         if ((double) f < 0.1) {
-            return false;
+            return;
         }
 
         // パーティクル
         if (f >= 1) {
-            shootParticle(world, user);
+            shootParticle(level, user);
         }
 
         // ここが放つ処理に見える。
-        List<ItemStack> list = BowItem.load(stack, itemStack, playerEntity);
-        if (world instanceof ServerWorld serverWorld) {
-            if (!list.isEmpty() && f >= 1) {
-                this.shootAll(serverWorld, playerEntity, playerEntity.getActiveHand(), stack, list, f * 4.0f, 0.0f, true, null);
-            } else {
-                this.shootAll(serverWorld, playerEntity, playerEntity.getActiveHand(), stack, list, f * 2.0f, 0.0f, f == 0.0f, null);
+        List<ItemStack> list = BowItem.getChargedProjectiles(stack);
+        if (level instanceof ServerLevel serverLevel) {
+            if (!list.isEmpty()) {
+                this.performShooting(serverLevel, player, player.getUsedItemHand(), stack, list, f * 1.6f, 1.0f, f == 1.0f);
             }
             if (f < 1) {
-                world.playSound(null, playerEntity.getX(), playerEntity.getY(), playerEntity.getZ(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.PLAYERS, 1.0f, 0.8f);
+                level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0f, 1.0f / (level.getRandom().nextFloat() * 0.4f + 1.2f) + f * 0.5f);
             } else {
-                world.playSound(null, playerEntity.getX(), playerEntity.getY(), playerEntity.getZ(), ModSoundEvents.LEGACY_BOW_SHOOT_1, SoundCategory.PLAYERS, 1.0f, 1.2f);
-                world.playSound(null, playerEntity.getX(), playerEntity.getY(), playerEntity.getZ(), ModSoundEvents.DUNGEONS_BOW_SHOOT, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSoundEvents.LEGACY_BOW_SHOOT_1, SoundSource.PLAYERS, 1.0f, 0.8f / (level.getRandom().nextFloat() * 0.4f + 1.2f));
+                level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSoundEvents.DUNGEONS_BOW_SHOOT, SoundSource.PLAYERS, 1.0f, 1.4f);
             }
         }
-        return true;
-    }
-
-    // インターフェースとして持っておくべきやつ
-    @Override
-    public void resetFov() {
-        fov = Float.NaN;
-    }
-
-    @Override
-    public float getFov() {
-        return this.fov;
     }
 }
