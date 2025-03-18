@@ -16,8 +16,8 @@ import com.craftsman_bows.init.ModSoundEvents;
 
 import java.util.List;
 
-public class ShortBowItem extends CraftsmanBowItem implements CanSprintWhileUsing {
-    public ShortBowItem(Item.Properties properties) {
+public class LongBowItem extends CraftsmanBowItem implements CanSprintWhileUsing {
+    public LongBowItem(Item.Properties properties) {
         super(properties);
     }
 
