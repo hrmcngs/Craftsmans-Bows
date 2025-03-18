@@ -1,22 +1,21 @@
 package com.craftsman_bows.init;
 
-import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.minecraft.particle.SimpleParticleType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.resources.ResourceLocation;
 
 import static com.craftsman_bows.CraftsmanBows.Mod_ID;
 
 public class ModParticleTypes {
 
-    public static final SimpleParticleType CHARGE_DUST = FabricParticleTypes.simple();
-    public static final SimpleParticleType CHARGE_END = FabricParticleTypes.simple();
-    public static final SimpleParticleType SHOOT = FabricParticleTypes.simple();
+    public static final SimpleParticleType CHARGE_DUST = new SimpleParticleType(false);
+    public static final SimpleParticleType CHARGE_END = new SimpleParticleType(false);
+    public static final SimpleParticleType SHOOT = new SimpleParticleType(false);
 
     public static void init() {
-        Registry.register(Registries.PARTICLE_TYPE, Identifier.of(Mod_ID, "charge_dust"), CHARGE_DUST);
-        Registry.register(Registries.PARTICLE_TYPE, Identifier.of(Mod_ID, "charge_end"), CHARGE_END);
-        Registry.register(Registries.PARTICLE_TYPE, Identifier.of(Mod_ID, "shoot"), SHOOT);
+        Registry.register(Registry.PARTICLE_TYPE, new ResourceLocation(Mod_ID, "charge_dust"), CHARGE_DUST);
+        Registry.register(Registry.PARTICLE_TYPE, new ResourceLocation(Mod_ID, "charge_end"), CHARGE_END);
+        Registry.register(Registry.PARTICLE_TYPE, new ResourceLocation(Mod_ID, "shoot"), SHOOT);
     }
 }
