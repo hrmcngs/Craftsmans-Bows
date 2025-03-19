@@ -26,6 +26,7 @@ public class ModSoundEvents {
         return Registry.register(Registries.SOUND_EVENT, id, net.minecraft.sound.SoundEvent.of(id));
     }
 
-        public static void init() {
+    public static void init() {
+        // This method can be used for any initialization code if needed
     }
 }
