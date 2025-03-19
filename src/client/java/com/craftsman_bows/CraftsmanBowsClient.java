@@ -1,10 +1,7 @@
 package com.craftsman_bows;
 
-import net.fabricmc.api.ClientModInitializer;
-
-public class CraftsmanBowsClient implements ClientModInitializer {
-	@Override
-	public void onInitializeClient() {
-		RegisterParticle.init();
-	}
+public class CraftsmanBowsClient {
+    public static void onInitializeClient() {
+        RegisterParticle.init();
+    }
 }
