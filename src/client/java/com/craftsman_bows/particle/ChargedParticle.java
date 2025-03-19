@@ -1,12 +1,9 @@
 package com.craftsman_bows.particle;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.particle.*;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particle.SimpleParticleType;
 
-@Environment(EnvType.CLIENT)
 public class ChargedParticle extends AnimatedParticle {
     protected ChargedParticle(ClientWorld clientWorld, double d, double e, double f, double g, SpriteProvider spriteProvider) {
         super(clientWorld, d, e, f, spriteProvider, 0.0125F);
@@ -16,7 +13,6 @@ public class ChargedParticle extends AnimatedParticle {
         this.setSpriteForAge(spriteProvider);
     }
 
-    @Environment(EnvType.CLIENT)
     public static class Factory implements ParticleFactory<SimpleParticleType> {
         private final SpriteProvider spriteProvider;
 
