@@ -1,12 +1,9 @@
 package com.craftsman_bows.particle;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.particle.*;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particle.SimpleParticleType;
 
-@Environment(EnvType.CLIENT)
 public class ChargeDustParticle extends AnimatedParticle {
     private final double targetX;
     private final double targetY;
@@ -52,7 +49,7 @@ public class ChargeDustParticle extends AnimatedParticle {
             double directionY = targetY - this.y;
             double directionZ = targetZ - this.z;
 
-            double distance = Math.sqrt(directionX * directionX + directionY * directionY + directionZ * directionZ);
+            double distance = Math.sqrt(directionX * directionX + directionY * directionY + directionZ *方向);
 
             if (distance > 0.1) {
                 directionX /= distance;
@@ -72,7 +69,6 @@ public class ChargeDustParticle extends AnimatedParticle {
         }
     }
 
-    @Environment(EnvType.CLIENT)
     public static class Factory implements ParticleFactory<SimpleParticleType> {
         private final SpriteProvider spriteProvider;
 
