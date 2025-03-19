@@ -1,7 +1,6 @@
 package com.craftsman_bows.init;
 
 import com.craftsman_bows.item.*;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -39,14 +38,6 @@ public class item {
     public static final Item BURST_ARBALEST = register("burst_arbalest", new BurstArbalestItem(createSettings("burst_arbalest").maxCount(1).maxDamage(900).enchantable(1).fireproof().repairable(NETHERITE_INGOT)));
 
     public static void init() {
-
-        // アイテムのグループを武器に
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.COMBAT).register(content -> {
-            content.add(SHORT_BOW);
-            content.add(LONG_BOW);
-            content.add(SHOT_CROSSBOW);
-            content.add(REPEATER_CROSSBOW);
-            content.add(BURST_ARBALEST);
-        });
+        // Forgeの場合、アイテムグループへの追加は別途設定が必要になります。
     }
 }
