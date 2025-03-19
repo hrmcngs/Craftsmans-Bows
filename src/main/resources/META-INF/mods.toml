@@ -12,7 +12,6 @@ description='''
 authors="Chuzume"
 credits="Thanks to all contributors!"
 logoFile="assets/craftsman_bows/icon.png"
-displayURL="https://fabricmc.net/"
 
 [[dependencies.craftsman_bows]]
     modId="forge"
