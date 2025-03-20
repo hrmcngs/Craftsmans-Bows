@@ -11,12 +11,12 @@ buildscript {
     }
 }
 
-plugins {
-    id 'java'
-    id 'eclipse'
-    id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '5.1.30' // Updated to a specific version
-}
+// plugins {
+//     id 'java'
+//     id 'eclipse'
+//     id 'maven-publish'
+//     id 'net.minecraftforge.gradle' version '5.1.30' // Updated to a specific version
+// }
 
 group = 'com.example'
 version = '1.0.0'
@@ -36,13 +36,13 @@ minecraft {
     }
 }
 
-repositories {
-    mavenCentral()
-    maven {
-        name = 'forge'
-        url = 'https://maven.minecraftforge.net/'
-    }
-}
+// repositories {
+//     mavenCentral()
+//     maven {
+//         name = 'forge'
+//         url = 'https://maven.minecraftforge.net/'
+//     }
+// }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.19.2-43.1.1'
