@@ -1,5 +1,5 @@
 plugins {
-    id 'net.minecraftforge.gradle' version '5.1.30'
+    id 'net.minecraftforge.gradle' version '5.1.28' // Updated to a specific version
     id 'maven-publish'
 }
 
