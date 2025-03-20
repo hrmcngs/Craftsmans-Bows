@@ -1,21 +1,32 @@
 plugins {
-    id 'java'
-    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '5.1.30'
     id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '5.1.30' // Ensure a specific version
-    id 'base' // Add the base plugin
 }
 
-group = 'com.example'
-version = '1.0.0'
-archivesBaseName = 'craftsmansbows'
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    maven {
+        name = 'forge'
+        url = 'https://maven.minecraftforge.net/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+}
 
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
 minecraft {
-    version = "1.19.2-43.1.1"
-    mappings channel: 'official', version: '1.19.2'
+    mappings channel: 'official', version: "${project.minecraft_version}"
     runs {
         client {
             workingDirectory project.file('run')
@@ -24,50 +35,39 @@ minecraft {
     }
 }
 
-repositories {
-    mavenCentral()
-    maven {
-        name = 'forge'
-        url = 'https://maven.minecraftforge.net/'
-    }
-}
-
-dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.2-43.1.1'
-}
-
 processResources {
     inputs.property "version", project.version
+
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 17
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 jar {
-    manifest {
-        attributes(
-            "Specification-Title": "craftsmansbows",
-            "Specification-Vendor": "example",
-            "Specification-Version": "1", // We are version 1 of ourselves
-            "Implementation-Title": project.name,
-            "Implementation-Version": project.version,
-            "Implementation-Vendor": "example",
-            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        )
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
     }
 }
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        create("mavenJava", MavenPublication) {
+            artifactId = project.archives_base_name
             from components.java
         }
     }
 
     repositories {
-        maven {
-            name = 'local'
-            url = "file://${project.buildDir}/repos"
-        }
+        // Add repositories to publish to here.
     }
 }
