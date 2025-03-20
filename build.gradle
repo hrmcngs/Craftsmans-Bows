@@ -9,8 +9,8 @@ group = 'com.example'
 version = '1.0.0'
 archivesBaseName = 'craftsmansbows'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 minecraft {
     version = "1.19.2-43.1.1"
@@ -23,13 +23,13 @@ minecraft {
     }
 }
 
-// repositories {
-//     mavenCentral()
-//     maven {
-//         name = 'forge'
-//         url = 'https://maven.minecraftforge.net/'
-//     }
-// }
+repositories {
+    mavenCentral()
+    maven {
+        name = 'forge'
+        url = 'https://maven.minecraftforge.net/'
+    }
+}
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.19.2-43.1.1'
