@@ -1,8 +1,10 @@
 package com.craftsman_bows.item;
 
 import com.craftsman_bows.client.CraftsmanBowsClientExtensions;
+import com.craftsman_bows.init.ModEnchantments;
 import com.craftsman_bows.init.ModParticleTypes;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -11,11 +13,13 @@ import net.minecraft.world.item.ArrowItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -36,6 +40,29 @@ public class CraftsmanBowItem extends BowItem {
     @Override
     public int getEnchantmentValue() {
         return 1;
+    }
+
+    /**
+     * このアイテムに付けられるエンチャント。武器の種類ごとに変えたい場合はサブクラスで override する。
+     */
+    protected Set<ResourceLocation> allowedEnchantments() {
+        return ModEnchantments.RANGED_WEAPON;
+    }
+
+    /**
+     * 付けられるエンチャントをエンチャント名で判定する。
+     *
+     * <p>バニラは EnchantmentCategory（BowItem を継承しているか等の内部的な武器種別）で判定するが、
+     * この MOD は見た目がクロスボウでも中身は弓、といったアイテムを持つのでそれでは指定できない。
+     * Forge では {@code Enchantment#canEnchant} もこのフックに委譲されるため、
+     * エンチャントテーブルでも金床でもここを通る。
+     *
+     * <p>ただし耐久力（unbreaking）だけは、バニラ側が「耐久値を持つアイテムなら無条件で可」と
+     * 判定してしまうためここでは弾けない。この MOD ではどのみち許可しているので実害はない。
+     */
+    @Override
+    public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
+        return ModEnchantments.isAllowed(this.allowedEnchantments(), enchantment);
     }
 
     // 1.21 版の repairable(...) 相当
