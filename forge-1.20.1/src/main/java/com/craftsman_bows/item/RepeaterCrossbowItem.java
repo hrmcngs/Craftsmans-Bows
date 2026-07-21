@@ -31,7 +31,9 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
         super(properties, repairIngredient);
     }
 
-    // 変数の定義
+    // 変数の定義。
+    // どちらもクライアントの描画・操作にしか使わない。シングルプレイでは内部サーバーと
+    // 同じ Item インスタンスを共有するので、書き込みはクライアント側だけに限定する。
     float movementSpeed = 5.0f;
     float fov;
 
@@ -45,8 +47,10 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
         user.playSound(SoundEvents.IRON_DOOR_OPEN, 1.0f, 2f);
 
         // 変数リセット
-        movementSpeed = 3.0f;
-        fov = Float.NaN;
+        if (world.isClientSide) {
+            movementSpeed = 3.0f;
+            fov = Float.NaN;
+        }
 
         // 腕振る処理
         InteractionHand activeHand = user.getUsedItemHand();
@@ -65,16 +69,18 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
     public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
         int useTick = this.getUseDuration(stack) - remainingUseTicks;
 
-        // 徐々に移動速度が下がっていく
-        movementSpeed = 3.0f - (useTick * 0.1f);
+        if (world.isClientSide) {
+            // 徐々に移動速度が下がっていく
+            movementSpeed = 3.0f - (useTick * 0.1f);
 
-        // 移動速度が負になると操作方向が逆になるので、0未満にならないようにする
-        if (movementSpeed <= 0) {
-            movementSpeed = 0.0f;
-        }
+            // 移動速度が負になると操作方向が逆になるので、0未満にならないようにする
+            if (movementSpeed <= 0) {
+                movementSpeed = 0.0f;
+            }
 
-        if (useTick >= 30) {
-            fov = 0.8f;
+            if (useTick >= 30) {
+                fov = 0.8f;
+            }
         }
 
         // チャージ演出
@@ -281,7 +287,6 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
         // ワールドがサーバーなら？
         if (world instanceof ServerLevel serverWorld) {
             this.shootArrow(serverWorld, playerEntity, stack, ammo, 2.7f, 3.0f, false);
-            if (Boolean.getBoolean("craftsman_bows.probe")) org.slf4j.LoggerFactory.getLogger("CB-PROBE").info("[SERVER] gatlingShot FIRED");
         }
 
         consumeAmmo(playerEntity, stack, ammo);
@@ -300,7 +305,9 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
         if (!(user instanceof Player playerEntity)) {
             return;
         }
-        fov = Float.NaN;
+        if (world.isClientSide) {
+            fov = Float.NaN;
+        }
 
         // 使用時間に応じたクールタイムがかかる
         int useTick = this.getUseDuration(stack) - remainingUseTicks;

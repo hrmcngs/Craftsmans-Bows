@@ -42,7 +42,9 @@ public class LongBowItem extends CraftsmanBowItem implements ZoomItem {
         } else {
             user.startUsingItem(hand);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_LOAD.get(), 1.0f, 1.0f);
-            fov = 1f;
+            if (world.isClientSide) {
+                fov = 1f;
+            }
             return InteractionResultHolder.consume(itemStack);
         }
     }
@@ -69,8 +71,11 @@ public class LongBowItem extends CraftsmanBowItem implements ZoomItem {
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_4.get(), 1.0f, 1.2f);
         }
 
-        // ズーム処理
-        fov = 1.0f - getPullProgress(i) / 3f;
+        // ズーム処理（fov はクライアントの描画にしか使わないので、クライアント側でだけ更新する。
+        // 両サイドで書き込むと、シングルプレイでは内部サーバーのスレッドと値を奪い合って画面が揺れる）
+        if (world.isClientSide) {
+            fov = 1.0f - getPullProgress(i) / 3f;
+        }
     }
 
     // 使用をやめたとき、つまりクリックを離したときの処理だ。
@@ -80,7 +85,9 @@ public class LongBowItem extends CraftsmanBowItem implements ZoomItem {
             return;
         }
 
-        fov = Float.NaN;
+        if (world.isClientSide) {
+            fov = Float.NaN;
+        }
 
         // 手持ちの矢の種類を取得する
         ItemStack ammo = playerEntity.getProjectile(stack);

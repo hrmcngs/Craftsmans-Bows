@@ -28,8 +28,15 @@ public class ShotCrossbowItem extends CraftsmanBowItem
         super(properties, repairIngredient);
     }
 
-    // 変数の定義
-    int shootStack = 0;
+    /**
+     * フルチャージ時に追加で撃たれる矢の本数。
+     * 元は i == 20 のティックでフィールドに 4 を代入していたが、そのフィールドは
+     * シングルプレイでクライアントと内部サーバーが共有してしまう上、
+     * releaseUsing にはフルチャージ（i >= 20）でしか到達しないため定数で十分。
+     */
+    private static final int EXTRA_SHOTS = 4;
+
+    // 移動速度はクライアントの操作にしか使わないので、書き込みはクライアント側だけに限定する
     float movementSpeed = 2.5f;
 
     // 最初の使用時のアクション
@@ -38,7 +45,6 @@ public class ShotCrossbowItem extends CraftsmanBowItem
         ItemStack itemStack = user.getItemInHand(hand);
         boolean bl = !user.getProjectile(itemStack).isEmpty();
         if (user.getAbilities().instabuild || bl) {
-            shootStack = 0;
             user.startUsingItem(hand);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_LOAD.get(), 1.0f, 1.25f);
             return InteractionResultHolder.consume(itemStack);
@@ -50,7 +56,9 @@ public class ShotCrossbowItem extends CraftsmanBowItem
     @Override
     public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
 
-        movementSpeed = 2.5f;
+        if (world.isClientSide) {
+            movementSpeed = 2.5f;
+        }
         int i = this.getUseDuration(stack) - remainingUseTicks;
 
         // チャージ演出
@@ -100,7 +108,6 @@ public class ShotCrossbowItem extends CraftsmanBowItem
         }
 
         if (i == 20) {
-            shootStack = 4;
             user.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE.value(), 1.0f, 1.5f);
             user.playSound(SoundEvents.IRON_DOOR_CLOSE, 1.0f, 2f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_1.get(), 1.0f, 1.1f);
@@ -172,11 +179,10 @@ public class ShotCrossbowItem extends CraftsmanBowItem
         // ここが放つ処理に見える。
         if (world instanceof ServerLevel serverWorld) {
             this.shootShotArrow(serverWorld, playerEntity, stack, ammo, 0.0f, true);
-            for (int i2 = 0; i2 < shootStack; i2++) {
+            for (int i2 = 0; i2 < EXTRA_SHOTS; i2++) {
                 if (stack.isEmpty()) break;
                 this.shootShotArrow(serverWorld, playerEntity, stack, ammo, 15.0f, false);
             }
-            shootStack = 0;
         }
 
         consumeAmmo(playerEntity, stack, ammo);

@@ -63,7 +63,12 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     private float craftsman_bows$movementSpeed() {
         ItemStack itemStack = this.getUseItem();
         if (itemStack.getItem() instanceof CustomUsingMoveItem customUsingMoveItem) {
-            return customUsingMoveItem.getMovementSpeed();
+            float speed = customUsingMoveItem.getMovementSpeed();
+            // resetMovementSpeed() 後に読んでしまうと NaN が入っていることがある。
+            // そのまま掛けると移動入力が NaN になって一切動けなくなるので弾いておく。
+            if (!Float.isNaN(speed)) {
+                return speed;
+            }
         }
         return 1.0F;
     }

@@ -8,7 +8,11 @@ This is a simple and small-scale mod that adds four vanilla-style long-range wea
 | Fabric | 1.21.4 | repository root (`src/`) |
 | Forge | 1.20.1 | [`forge-1.20.1/`](forge-1.20.1/) |
 
-Both builds add the same five weapons. Build the Forge one with `cd forge-1.20.1 && ./gradlew build` (Java 17).
+Both builds add the same five weapons. The Forge one has two helper scripts (both need Java 17, and both
+work offline once the dependencies are cached — pass `--online` the first time):
+
+- `forge-1.20.1/build.sh` — build the jar into `forge-1.20.1/build/libs/`
+- `forge-1.20.1/run.sh` — launch the dev client (`run.sh server` for a dedicated server)
 
 ## Items
 ### Shortbow

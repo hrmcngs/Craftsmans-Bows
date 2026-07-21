@@ -28,10 +28,7 @@ minecraft {
                 }
             }
         }
-        client {
-            args '--quickPlaySingleplayer', 'New World'
-            property 'craftsman_bows.probe', 'true'
-        }
+        client { }
         server { args '--nogui' }
     }
 }

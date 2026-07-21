@@ -17,12 +17,16 @@ public class ClientForgeEvents {
 
     @SubscribeEvent
     public static void computeFovModifier(ComputeFovModifierEvent event) {
+        // 使用中かどうかで判定する。ここで resetFov() を呼んで値を消費してしまうと、
+        // 読み取りと書き込みが 1 ティックでもズレたときにバニラの FOV に戻って画面が揺れる。
+        if (!event.getPlayer().isUsingItem()) {
+            return;
+        }
         ItemStack itemStack = event.getPlayer().getUseItem();
         if (itemStack.getItem() instanceof ZoomItem zoomItem) {
             float fov = zoomItem.getFov();
             if (!Float.isNaN(fov)) {
                 event.setNewFovModifier(fov);
-                zoomItem.resetFov();
             }
         }
     }
