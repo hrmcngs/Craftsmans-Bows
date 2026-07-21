@@ -1,5 +1,6 @@
 package com.craftsman_bows;
 
+import com.craftsman_bows.init.ModEnchantments;
 import com.craftsman_bows.init.ModItems;
 import com.craftsman_bows.init.ModParticleTypes;
 import com.craftsman_bows.init.ModSoundEvents;
@@ -18,6 +19,7 @@ public class CraftsmanBows {
         ModItems.register(modBus);
         ModParticleTypes.register(modBus);
         ModSoundEvents.register(modBus);
+        ModEnchantments.register(modBus);
 
         modBus.addListener(ModItems::addToCreativeTab);
     }

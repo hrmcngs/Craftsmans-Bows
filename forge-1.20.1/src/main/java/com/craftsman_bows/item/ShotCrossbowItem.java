@@ -61,8 +61,8 @@ public class ShotCrossbowItem extends CraftsmanBowItem
         }
         int i = this.getUseDuration(stack) - remainingUseTicks;
 
-        // チャージ演出
-        if (i < 20) {
+        // チャージ演出（パーティクルだけなのでクライアントでのみ計算する）
+        if (world.isClientSide && i < 20) {
             // プレイヤーの視線方向を取得
             Vec3 lookDirection = user.getViewVector(1.0F);
 

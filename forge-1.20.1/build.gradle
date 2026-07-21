@@ -18,10 +18,13 @@ minecraft {
     runs {
         configureEach {
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
+            // debug にすると毎ティック大量にログが出て、その出力だけで開発実行がカクつく。
+            // 詳しく見たいときだけ一時的に 'debug' に戻す。
+            property 'forge.logging.console.level', 'info'
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            // 既定のヒープ（RAM の 1/4）だと GC でカクつきやすいので明示する
+            jvmArgs '-Xms1G', '-Xmx2G'
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -39,13 +42,45 @@ mixin {
     config "${mod_id}.client.mixins.json"
 }
 
+// 動作確認用に読み込む MOD の置き場。ここに jar を置くとオフラインでも読み込める。
+// 置かれていなければ Modrinth から取得する。
+def localModsDir = 'libs/local'
+def localMods = fileTree(dir: localModsDir, includes: ['*.jar']).files.sort { it.name }
+
 repositories {
     maven { url = 'https://maven.minecraftforge.net' }
+    // Xtra Arrows の配布元。他の依存を取りに行かないよう maven.modrinth に限定しておく
+    maven {
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    // libs/local/ の jar を依存として引くため。
+    // fg.deobf は files(...) を remap してくれない（SRG 名のまま読み込まれて落ちる）ので、
+    // flatDir 経由でモジュール依存として扱う必要がある。
+    flatDir {
+        dir localModsDir
+        content { includeGroup 'localmod' }
+    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    // 動作確認用に一緒に読み込む MOD。run.sh で選んだときだけ有効になる。
+    // runtimeOnly なので、ビルドされる jar には含まれないし依存にもならない。
+    if (project.hasProperty('withXtraArrows')) {
+        if (localMods.isEmpty()) {
+            // libs/local/ が空なら Modrinth から取得する（初回はネットが必要）
+            runtimeOnly fg.deobf("maven.modrinth:xtra-arrows:${xtra_arrows_version}")
+        } else {
+            // libs/local/ に置かれた jar を使う（オフラインで動く）。
+            // flatDir は [artifact].[ext] でも引けるので、拡張子を除いたファイル名を artifact 名にする。
+            localMods.each { jar ->
+                runtimeOnly fg.deobf("localmod:${jar.name.replaceFirst(/\.jar$/, '')}:1")
+            }
+        }
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {

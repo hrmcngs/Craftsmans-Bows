@@ -2,9 +2,9 @@
 #
 # Craftsman's bows — Forge 1.20.1 ビルドスクリプト
 #
-#   ./build.sh            オフラインでビルド（既に一度ビルド済みならネット不要）
-#   ./build.sh --online   ネットに繋いでビルド（初回、または依存を更新したいとき）
-#   ./build.sh --clean    build/ を消してからビルド
+#   ./forge-1.20.1/build.sh            オフラインでビルド（既に一度ビルド済みならネット不要）
+#   ./forge-1.20.1/build.sh --online   ネットに繋いでビルド（初回、または依存を更新したいとき）
+#   ./forge-1.20.1/build.sh --clean    build/ を消してからビルド
 #
 set -euo pipefail
 cd "$(dirname "$0")"

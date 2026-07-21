@@ -83,8 +83,8 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
             }
         }
 
-        // チャージ演出
-        if (useTick <= 32) {
+        // チャージ演出（パーティクルだけなのでクライアントでのみ計算する）
+        if (world.isClientSide && useTick <= 32) {
             // プレイヤーの視線方向を取得
             Vec3 lookDirection = user.getViewVector(1.0F);
 
@@ -165,7 +165,7 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
             user.playSound(ModSoundEvents.DUNGEONS_COG_CROSSBOW_PICKUP.get(), 1.0f, 1.5f);
             user.playSound(SoundEvents.GENERIC_EXTINGUISH_FIRE, 1.0f, 2.0f);
         }
-        if (useTick >= 82) {
+        if (world.isClientSide && useTick >= 82) {
             // もくもく警告パーティクル
             Vec3 muzzle = muzzlePosition(user);
 
@@ -180,7 +180,7 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
             user.playSound(ModSoundEvents.DUNGEONS_COG_CROSSBOW_PICKUP.get(), 1.0f, 1.5f);
             user.playSound(SoundEvents.GENERIC_EXTINGUISH_FIRE, 1.0f, 2.0f);
         }
-        if (useTick >= 98) {
+        if (world.isClientSide && useTick >= 98) {
             // アチアチパーティクル
             Vec3 muzzle = muzzlePosition(user);
 

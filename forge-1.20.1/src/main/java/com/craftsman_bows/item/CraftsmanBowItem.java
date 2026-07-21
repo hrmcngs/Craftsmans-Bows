@@ -80,10 +80,16 @@ public class CraftsmanBowItem extends BowItem {
     // 発射処理
     // ------------------------------------------------------------------
 
-    /** 矢が無限（クリエイティブ、または無限エンチャント）かどうか */
+    /** 矢が無限（クリエイティブ、または無限系エンチャント）かどうか */
     protected static boolean isInfinite(Player player, ItemStack weapon, ItemStack ammo) {
-        return player.getAbilities().instabuild
-                || (ammo.getItem() instanceof ArrowItem arrowItem && arrowItem.isInfinite(ammo, weapon, player));
+        if (player.getAbilities().instabuild) {
+            return true;
+        }
+        // 無尽の矢筒は、バニラの「無限」が対象外にしている効果付きの矢なども消費しない
+        if (weapon.getEnchantmentLevel(ModEnchantments.ENDLESS_QUIVER.get()) > 0) {
+            return true;
+        }
+        return ammo.getItem() instanceof ArrowItem arrowItem && arrowItem.isInfinite(ammo, weapon, player);
     }
 
     /**
@@ -158,6 +164,11 @@ public class CraftsmanBowItem extends BowItem {
     }
 
     private void spawnMuzzleParticle(Level world, LivingEntity player, ParticleOptions particle) {
+        // サーバー側では addParticle が何もしないので、座標計算ごと省く
+        if (!world.isClientSide) {
+            return;
+        }
+
         // プレイヤーの視線方向を取得
         Vec3 lookDirection = player.getViewVector(1.0F);
 
@@ -196,6 +207,11 @@ public class CraftsmanBowItem extends BowItem {
 
     /** チャージ中パーティクル */
     void chargingParticle(Level world, LivingEntity player) {
+        // サーバー側では addParticle が何もしないので、座標計算ごと省く
+        if (!world.isClientSide) {
+            return;
+        }
+
         // プレイヤーの視線方向を取得
         Vec3 lookDirection = player.getViewVector(1.0F);
 

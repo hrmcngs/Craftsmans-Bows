@@ -3,5 +3,7 @@
     "item.craftsman_bows.longbow": "Longbow",
     "item.craftsman_bows.shot_crossbow": "Shot Crossbow",
     "item.craftsman_bows.repeater_crossbow": "Repeater Crossbow",
-    "item.craftsman_bows.burst_arbalest": "Burst Arbalest"
+    "item.craftsman_bows.burst_arbalest": "Burst Arbalest",
+
+    "enchantment.craftsman_bows.endless_quiver": "Endless Quiver"
 }

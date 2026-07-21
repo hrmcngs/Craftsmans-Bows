@@ -12,7 +12,9 @@ Both builds add the same five weapons. The Forge one has two helper scripts (bot
 work offline once the dependencies are cached — pass `--online` the first time):
 
 - `forge-1.20.1/build.sh` — build the jar into `forge-1.20.1/build/libs/`
-- `forge-1.20.1/run.sh` — launch the dev client (`run.sh server` for a dedicated server)
+- `forge-1.20.1/run.sh` — launch the dev client (`run.sh server` for a dedicated server).
+  It asks whether to load [Xtra Arrows](https://modrinth.com/mod/xtra-arrows) alongside it for testing;
+  answer `y` (or pass `--xtra`). This only affects the dev run, never the built jar.
 
 ## Items
 ### Shortbow

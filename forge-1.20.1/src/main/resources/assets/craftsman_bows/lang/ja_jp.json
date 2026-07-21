@@ -3,5 +3,7 @@
     "item.craftsman_bows.longbow": "ロングボウ",
     "item.craftsman_bows.shot_crossbow": "ショットクロスボウ",
     "item.craftsman_bows.repeater_crossbow": "リピータークロスボウ",
-    "item.craftsman_bows.burst_arbalest": "バーストアーバレスト"
+    "item.craftsman_bows.burst_arbalest": "バーストアーバレスト",
+
+    "enchantment.craftsman_bows.endless_quiver": "無尽の矢筒"
 }

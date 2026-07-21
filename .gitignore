@@ -38,3 +38,7 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# 動作確認用に置く他 MOD の jar（再配布しないため追跡しない）
+
+forge-1.20.1/libs/local/*.jar
