@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.craftsman_bows.mixin.client",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "craftsman_bows.refmap.json",
+  "client": [
+    "LocalPlayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

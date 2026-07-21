@@ -1,0 +1,28 @@
+{
+  "parent": "item/handheld",
+  "textures": {
+    "layer0": "craftsman_bows:item/burst_arbalest"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "pulling": 1
+      },
+      "model": "craftsman_bows:item/burst_arbalest_pulling_0"
+    },
+    {
+      "predicate": {
+        "pulling": 1,
+        "craftsman_bows:use_ticks": 10
+      },
+      "model": "craftsman_bows:item/burst_arbalest_pulling_1"
+    },
+    {
+      "predicate": {
+        "pulling": 1,
+        "craftsman_bows:use_ticks": 20
+      },
+      "model": "craftsman_bows:item/burst_arbalest_pulling_2"
+    }
+  ]
+}

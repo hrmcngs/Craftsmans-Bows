@@ -2,6 +2,14 @@
 This is a simple and small-scale mod that adds four vanilla-style long-range weapons. 
 <br>I made this as a mod creation and Java coding practice.
 
+## Supported versions
+| Loader | Minecraft | Source |
+| --- | --- | --- |
+| Fabric | 1.21.4 | repository root (`src/`) |
+| Forge | 1.20.1 | [`forge-1.20.1/`](forge-1.20.1/) |
+
+Both builds add the same five weapons. Build the Forge one with `cd forge-1.20.1 && ./gradlew build` (Java 17).
+
 ## Items
 ### Shortbow
 ![Shortbow](https://cdn.modrinth.com/data/cached_images/e27a9e28dc3cf56bf69e44ccfd53d24d1d1ad139.png)

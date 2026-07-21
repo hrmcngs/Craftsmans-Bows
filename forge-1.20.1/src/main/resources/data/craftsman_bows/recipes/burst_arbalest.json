@@ -1,0 +1,33 @@
+{
+  "category": "equipment",
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#g/",
+    "gnS",
+    "/SR"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:dispenser"
+    },
+    "g": {
+      "item": "minecraft:gold_ingot"
+    },
+    "/": {
+      "item": "minecraft:stick"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "R": {
+      "item": "minecraft:repeater"
+    },
+    "n": {
+      "item": "minecraft:netherite_ingot"
+    }
+  },
+  "result": {
+    "item": "craftsman_bows:burst_arbalest",
+    "count": 1
+  }
+}
