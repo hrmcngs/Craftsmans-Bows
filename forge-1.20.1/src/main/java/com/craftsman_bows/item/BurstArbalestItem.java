@@ -1,10 +1,12 @@
 package com.craftsman_bows.item;
 
+import com.craftsman_bows.init.ModEnchantments;
 import com.craftsman_bows.init.ModSoundEvents;
 import com.craftsman_bows.interfaces.entity.BypassCooldown;
 import com.craftsman_bows.interfaces.item.CustomUsingMoveItem;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -19,9 +21,19 @@ import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class BurstArbalestItem extends CraftsmanBowItem implements CustomUsingMoveItem {
+
+    // このアイテムはクロスボウ扱い。弓のエンチャント（power/punch/flame）は付かない
+    @Override
+    protected Set<ResourceLocation> allowedEnchantments() {
+        return ModEnchantments.CROSSBOW_WEAPON;
+    }
+
+    /** チャージ段階が進むティック。この 9 段階ぶんだけバースト数が増える */
+    private static final int[] CHARGE_STAGES = {10, 15, 20, 35, 40, 45, 60, 65, 70};
 
     // 1.21 版のデータコンポーネント（craftsman_bows:burst_count / burst_stack）に相当する NBT キー
     private static final String BURST_COUNT = "BurstCount";
@@ -71,50 +83,51 @@ public class BurstArbalestItem extends CraftsmanBowItem implements CustomUsingMo
         int useTick = this.getUseDuration(stack) - remainingUseTicks;
 
         // クライアント、サーバーともに行う処理
-        if (useTick < 70) {
+        if (!reached(stack, useTick, 70)) {
             chargingParticle(world, user);
         }
 
         // チャージ段階ごと
-        if (useTick == 20 || useTick == 45 || useTick == 70) {
+        if (reachedThisTick(stack, useTick, 20) || reachedThisTick(stack, useTick, 45)
+                || reachedThisTick(stack, useTick, 70)) {
             chargeEndParticle(world, user);
         }
 
         // チャージ1
-        if (useTick == 10) {
+        if (reachedThisTick(stack, useTick, 10)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.1f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_1.get(), 1.0f, 1.0f);
         }
-        if (useTick == 15) {
+        if (reachedThisTick(stack, useTick, 15)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.2f);
         }
-        if (useTick == 20) {
+        if (reachedThisTick(stack, useTick, 20)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.3f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_3.get(), 1.0f, 1.0f);
         }
 
         // チャージ2
-        if (useTick == 35) {
+        if (reachedThisTick(stack, useTick, 35)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.4f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_1.get(), 1.0f, 1.25f);
         }
-        if (useTick == 40) {
+        if (reachedThisTick(stack, useTick, 40)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.5f);
         }
-        if (useTick == 45) {
+        if (reachedThisTick(stack, useTick, 45)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.6f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_3.get(), 1.0f, 1.5f);
         }
 
         // チャージ3
-        if (useTick == 60) {
+        if (reachedThisTick(stack, useTick, 60)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.7f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_1.get(), 1.0f, 1.5f);
         }
-        if (useTick == 65) {
+        if (reachedThisTick(stack, useTick, 65)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.8f);
         }
-        if (useTick == 70) {
+        if (reachedThisTick(stack, useTick, 70)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 2.0f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_3.get(), 1.0f, 2.0f);
         }
@@ -122,10 +135,10 @@ public class BurstArbalestItem extends CraftsmanBowItem implements CustomUsingMo
         // サーバーのみ
         if (world instanceof ServerLevel) {
             // チャージカウントが進む
-            if (useTick == 10 || useTick == 15 || useTick == 20
-                    || useTick == 35 || useTick == 40 || useTick == 45
-                    || useTick == 60 || useTick == 65 || useTick == 70) {
-                setCounter(stack, BURST_STACK, getCounter(stack, BURST_STACK) + 1);
+            for (int stage : CHARGE_STAGES) {
+                if (reachedThisTick(stack, useTick, stage)) {
+                    setCounter(stack, BURST_STACK, getCounter(stack, BURST_STACK) + 1);
+                }
             }
         }
     }

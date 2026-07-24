@@ -1,5 +1,6 @@
 package com.craftsman_bows.item;
 
+import com.craftsman_bows.init.ModEnchantments;
 import com.craftsman_bows.init.ModParticleTypes;
 import com.craftsman_bows.init.ModSoundEvents;
 import com.craftsman_bows.interfaces.entity.BypassCooldown;
@@ -8,6 +9,7 @@ import com.craftsman_bows.interfaces.item.CustomFirstPersonRender;
 import com.craftsman_bows.interfaces.item.CustomUsingMoveItem;
 import com.craftsman_bows.interfaces.item.ZoomItem;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -22,6 +24,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class RepeaterCrossbowItem extends CraftsmanBowItem
@@ -29,6 +32,24 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
 
     public RepeaterCrossbowItem(Properties properties, Predicate<ItemStack> repairIngredient) {
         super(properties, repairIngredient);
+    }
+
+    /** チャージが終わって撃ち始めるまでのティック数（クイックチャージ無しのとき） */
+    private static final int FIRE_START = 50;
+
+    // このアイテムはクロスボウ扱い。弓のエンチャント（power/punch/flame）は付かない
+    @Override
+    protected Set<ResourceLocation> allowedEnchantments() {
+        return ModEnchantments.CROSSBOW_WEAPON;
+    }
+
+    /**
+     * 撃ち始めるティック。クイックチャージで早くなる。
+     * オーバーヒートまでの段階は撃ち始めからの経過で測るので、
+     * チャージが縮んだぶんだけ撃てる時間が伸びる。
+     */
+    private static int fireStart(ItemStack stack) {
+        return Math.round(FIRE_START / chargeSpeed(stack));
     }
 
     // 変数の定義。
@@ -71,20 +92,20 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
 
         if (world.isClientSide) {
             // 徐々に移動速度が下がっていく
-            movementSpeed = 3.0f - (useTick * 0.1f);
+            movementSpeed = 3.0f - (useTick * chargeSpeed(stack) * 0.1f);
 
             // 移動速度が負になると操作方向が逆になるので、0未満にならないようにする
             if (movementSpeed <= 0) {
                 movementSpeed = 0.0f;
             }
 
-            if (useTick >= 30) {
+            if (reached(stack, useTick, 30)) {
                 fov = 0.8f;
             }
         }
 
         // チャージ演出（パーティクルだけなのでクライアントでのみ計算する）
-        if (world.isClientSide && useTick <= 32) {
+        if (world.isClientSide && !reached(stack, useTick, 33)) {
             // プレイヤーの視線方向を取得
             Vec3 lookDirection = user.getViewVector(1.0F);
 
@@ -124,23 +145,23 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
             world.addParticle(ModParticleTypes.CHARGE_DUST.get(), particleX, particleY, particleZ, targetX, targetY, targetZ);
         }
 
-        if (useTick == 15) {
+        if (reachedThisTick(stack, useTick, 15)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.0f);
         }
-        if (useTick == 20) {
+        if (reachedThisTick(stack, useTick, 20)) {
             user.playSound(SoundEvents.STONE_BUTTON_CLICK_ON, 1.0f, 1.5f);
         }
-        if (useTick == 30) {
+        if (reachedThisTick(stack, useTick, 30)) {
             user.playSound(ModSoundEvents.DUNGEONS_COG_CROSSBOW_PICKUP.get(), 0.4f, 2.0f);
             user.playSound(SoundEvents.PISTON_EXTEND, 1.0f, 1.0f);
         }
-        if (useTick == 31) {
+        if (reachedThisTick(stack, useTick, 31)) {
             user.playSound(SoundEvents.PISTON_EXTEND, 1.0f, 1.5f);
         }
-        if (useTick == 32) {
+        if (reachedThisTick(stack, useTick, 32)) {
             user.playSound(SoundEvents.PISTON_EXTEND, 1.0f, 2.0f);
         }
-        if (useTick == 40) {
+        if (reachedThisTick(stack, useTick, 40)) {
             user.playSound(SoundEvents.IRON_DOOR_CLOSE, 1.0f, 2f);
             user.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE.value(), 1.0f, 1.5f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_3.get(), 1.0f, 2.0f);
@@ -157,15 +178,16 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
                     offsetX, offsetY, offsetZ);
         }
         // 完了して一拍置いてから射撃開始
-        if (useTick >= 50) {
+        int firing = useTick - fireStart(stack);   // 撃ち始めてからの経過ティック
+        if (firing >= 0) {
             this.gatlingShot(world, user, stack);
         }
         // あんまり長いこと撃ってると煙を吹き出す
-        if (useTick == 82) {
+        if (firing == 32) {
             user.playSound(ModSoundEvents.DUNGEONS_COG_CROSSBOW_PICKUP.get(), 1.0f, 1.5f);
             user.playSound(SoundEvents.GENERIC_EXTINGUISH_FIRE, 1.0f, 2.0f);
         }
-        if (world.isClientSide && useTick >= 82) {
+        if (world.isClientSide && firing >= 32) {
             // もくもく警告パーティクル
             Vec3 muzzle = muzzlePosition(user);
 
@@ -176,11 +198,11 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
             world.addParticle(ParticleTypes.SMOKE, muzzle.x, muzzle.y, muzzle.z, offsetX, offsetY, offsetZ);
         }
         // そろそろやばいぞ！
-        if (useTick == 98) {
+        if (firing == 48) {
             user.playSound(ModSoundEvents.DUNGEONS_COG_CROSSBOW_PICKUP.get(), 1.0f, 1.5f);
             user.playSound(SoundEvents.GENERIC_EXTINGUISH_FIRE, 1.0f, 2.0f);
         }
-        if (world.isClientSide && useTick >= 98) {
+        if (world.isClientSide && firing >= 48) {
             // アチアチパーティクル
             Vec3 muzzle = muzzlePosition(user);
 
@@ -191,7 +213,7 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
             world.addParticle(ParticleTypes.LAVA, muzzle.x, muzzle.y, muzzle.z, offsetX, offsetY, offsetZ);
         }
         // それでも撃ち続けるとオーバーヒートする
-        if (useTick == 113) {
+        if (firing == 63) {
             // サウンド
             user.playSound(SoundEvents.GENERIC_EXTINGUISH_FIRE, 1.0f, 1.5f);
             user.playSound(ModSoundEvents.DUNGEONS_COG_CROSSBOW_PLACE.get(), 1.0f, 1f);
@@ -309,18 +331,19 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
             fov = Float.NaN;
         }
 
-        // 使用時間に応じたクールタイムがかかる
+        // 撃っていた時間に応じたクールタイムがかかる
         int useTick = this.getUseDuration(stack) - remainingUseTicks;
+        int firing = useTick - fireStart(stack);
 
-        if (useTick <= 82) {
+        if (firing <= 32) {
             playerEntity.getCooldowns().addCooldown(this, 20);
         }
 
-        if (useTick >= 82 && useTick <= 114) {
+        if (firing >= 32) {
             playerEntity.getCooldowns().addCooldown(this, 30);
         }
 
-        if (useTick == 114) {
+        if (useTick >= this.getUseDuration(stack)) {
             playerEntity.getCooldowns().addCooldown(this, 60);
         }
 
@@ -336,9 +359,14 @@ public class RepeaterCrossbowItem extends CraftsmanBowItem
         }
     }
 
+    /**
+     * 撃ち始めるまで + 射撃できる 64 ティック。
+     * クイックチャージでチャージが縮んでも、オーバーヒート（撃ち始めから 63）が
+     * ちょうど末尾に来るようにしてある。
+     */
     @Override
     public int getUseDuration(ItemStack stack) {
-        return 114;
+        return fireStart(stack) + 64;
     }
 
     // 1.21 版の hand_animation_on_swap: false 相当。

@@ -55,24 +55,33 @@ public final class ModEnchantments {
     // 付けられるエンチャントの許可リスト（エンチャント名で指定する）
     // ------------------------------------------------------------------
 
-    /** {@code #minecraft:enchantable/bow} 相当 */
+    /** 弓だけに付くエンチャント（{@code #minecraft:enchantable/bow} のうち矢の性能を上げるもの） */
     public static final Set<ResourceLocation> BOW = names(
             "power",
             "punch",
-            "flame",
-            "infinity");
+            "flame");
+
+    /** クロスボウだけに付くエンチャント（{@code EnchantmentCategory.CROSSBOW} 相当） */
+    public static final Set<ResourceLocation> CROSSBOW = names(
+            "quick_charge",
+            "multishot",
+            "piercing");
+
+    /** 矢を無限にするエンチャント。弓にもクロスボウにも付く */
+    public static final Set<ResourceLocation> INFINITY = names(
+            "infinity",
+            MOD_ID + ":endless_quiver");
 
     /** {@code #minecraft:enchantable/durability} 相当 */
     public static final Set<ResourceLocation> DURABILITY = names(
             "unbreaking",
             "mending");
 
-    /** この MOD が追加したエンチャント */
-    public static final Set<ResourceLocation> ADDED = names(
-            MOD_ID + ":endless_quiver");
+    /** 弓タイプの武器（ショートボウ、ロングボウ）が受け付けるエンチャント */
+    public static final Set<ResourceLocation> BOW_WEAPON = union(BOW, INFINITY, DURABILITY);
 
-    /** この MOD の遠距離武器が既定で受け付けるエンチャント */
-    public static final Set<ResourceLocation> RANGED_WEAPON = union(BOW, DURABILITY, ADDED);
+    /** クロスボウタイプの武器が受け付けるエンチャント。弓のエンチャントは付かない */
+    public static final Set<ResourceLocation> CROSSBOW_WEAPON = union(CROSSBOW, INFINITY, DURABILITY);
 
     private ModEnchantments() {
     }

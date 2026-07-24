@@ -1,11 +1,13 @@
 package com.craftsman_bows.item;
 
+import com.craftsman_bows.init.ModEnchantments;
 import com.craftsman_bows.init.ModParticleTypes;
 import com.craftsman_bows.init.ModSoundEvents;
 import com.craftsman_bows.interfaces.entity.BypassCooldown;
 import com.craftsman_bows.interfaces.item.CustomArmPoseItem;
 import com.craftsman_bows.interfaces.item.CustomFirstPersonRender;
 import com.craftsman_bows.interfaces.item.CustomUsingMoveItem;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -19,6 +21,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class ShotCrossbowItem extends CraftsmanBowItem
@@ -26,6 +29,12 @@ public class ShotCrossbowItem extends CraftsmanBowItem
 
     public ShotCrossbowItem(Properties properties, Predicate<ItemStack> repairIngredient) {
         super(properties, repairIngredient);
+    }
+
+    // このアイテムはクロスボウ扱い。弓のエンチャント（power/punch/flame）は付かない
+    @Override
+    protected Set<ResourceLocation> allowedEnchantments() {
+        return ModEnchantments.CROSSBOW_WEAPON;
     }
 
     /**
@@ -62,7 +71,7 @@ public class ShotCrossbowItem extends CraftsmanBowItem
         int i = this.getUseDuration(stack) - remainingUseTicks;
 
         // チャージ演出（パーティクルだけなのでクライアントでのみ計算する）
-        if (world.isClientSide && i < 20) {
+        if (world.isClientSide && !reached(stack, i, 20)) {
             // プレイヤーの視線方向を取得
             Vec3 lookDirection = user.getViewVector(1.0F);
 
@@ -103,11 +112,11 @@ public class ShotCrossbowItem extends CraftsmanBowItem
         }
 
         // 途中が寂しいので…
-        if (i == 10) {
+        if (reachedThisTick(stack, i, 10)) {
             user.playSound(SoundEvents.CROSSBOW_LOADING_MIDDLE, 1.0f, 1.0f);
         }
 
-        if (i == 20) {
+        if (reachedThisTick(stack, i, 20)) {
             user.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE.value(), 1.0f, 1.5f);
             user.playSound(SoundEvents.IRON_DOOR_CLOSE, 1.0f, 2f);
             user.playSound(ModSoundEvents.DUNGEONS_BOW_CHARGE_1.get(), 1.0f, 1.1f);
@@ -148,11 +157,7 @@ public class ShotCrossbowItem extends CraftsmanBowItem
     /** 矢を 1 本発射する。pickup が false なら回収できない矢になる。 */
     protected void shootShotArrow(ServerLevel world, Player shooter, ItemStack stack, ItemStack ammo,
                                   float divergence, boolean pickup) {
-        AbstractArrow arrow = this.makeArrow(world, shooter, stack, ammo, 1.2f, divergence, true);
-        if (!pickup) {
-            arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
-        }
-        world.addFreshEntity(arrow);
+        this.spreadArrows(world, shooter, stack, ammo, 1.2f, divergence, true, pickup);
         hurtWeapon(stack, shooter, shooter.getUsedItemHand());
     }
 
@@ -169,10 +174,9 @@ public class ShotCrossbowItem extends CraftsmanBowItem
             return;
         }
 
-        // フルチャージしていなければ発射しない
+        // フルチャージしていなければ発射しない（20 ティック分。クイックチャージで短くなる）
         int i = this.getUseDuration(stack) - remainingUseTicks;
-        float f = getPowerForTime(i);
-        if ((double) f < 1) {
+        if (!reached(stack, i, 20)) {
             return;
         }
 

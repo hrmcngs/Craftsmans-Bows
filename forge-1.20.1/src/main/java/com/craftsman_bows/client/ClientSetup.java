@@ -5,6 +5,7 @@ import com.craftsman_bows.client.particle.ChargeDustParticle;
 import com.craftsman_bows.client.particle.ChargedParticle;
 import com.craftsman_bows.init.ModItems;
 import com.craftsman_bows.init.ModParticleTypes;
+import com.craftsman_bows.item.CraftsmanBowItem;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -37,7 +38,10 @@ public class ClientSetup {
                 if (entity == null || entity.getUseItem() != stack) {
                     return 0.0F;
                 }
-                return stack.getUseDuration() - entity.getUseItemRemainingTicks();
+                int useTicks = stack.getUseDuration() - entity.getUseItemRemainingTicks();
+                // モデルの切り替え位置はクイックチャージ抜きのティック数で書いてあるので、
+                // 実際の進み具合に合わせて換算する
+                return useTicks * CraftsmanBowItem.chargeSpeed(stack);
             });
         }));
     }

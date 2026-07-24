@@ -29,6 +29,9 @@ import java.util.function.Predicate;
  */
 public class CraftsmanBowItem extends BowItem {
 
+    /** マルチショットで増える矢の角度。バニラのクロスボウと同じ左右 10 度。 */
+    private static final float[] MULTISHOT_ANGLES = {-10.0F, 10.0F};
+
     private final Predicate<ItemStack> repairIngredient;
 
     public CraftsmanBowItem(Properties properties, Predicate<ItemStack> repairIngredient) {
@@ -46,7 +49,7 @@ public class CraftsmanBowItem extends BowItem {
      * このアイテムに付けられるエンチャント。武器の種類ごとに変えたい場合はサブクラスで override する。
      */
     protected Set<ResourceLocation> allowedEnchantments() {
-        return ModEnchantments.RANGED_WEAPON;
+        return ModEnchantments.BOW_WEAPON;
     }
 
     /**
@@ -98,12 +101,23 @@ public class CraftsmanBowItem extends BowItem {
      */
     protected AbstractArrow makeArrow(Level level, Player player, ItemStack weapon, ItemStack ammo,
                                       float velocity, float inaccuracy, boolean critical) {
+        return this.makeArrow(level, player, weapon, ammo, velocity, inaccuracy, critical, 0.0F);
+    }
+
+    /** {@code angle} は発射方向を左右にずらす角度（マルチショット用）。 */
+    protected AbstractArrow makeArrow(Level level, Player player, ItemStack weapon, ItemStack ammo,
+                                      float velocity, float inaccuracy, boolean critical, float angle) {
         ArrowItem arrowItem = ammo.getItem() instanceof ArrowItem item ? item : (ArrowItem) Items.ARROW;
         AbstractArrow arrow = this.customArrow(arrowItem.createArrow(level, ammo, player));
-        arrow.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, inaccuracy);
+        arrow.shootFromRotation(player, player.getXRot(), player.getYRot() + angle, 0.0F, velocity, inaccuracy);
 
         if (critical) {
             arrow.setCritArrow(true);
+        }
+
+        int piercing = weapon.getEnchantmentLevel(Enchantments.PIERCING);
+        if (piercing > 0) {
+            arrow.setPierceLevel((byte) piercing);
         }
 
         int power = weapon.getEnchantmentLevel(Enchantments.POWER_ARROWS);
@@ -126,12 +140,68 @@ public class CraftsmanBowItem extends BowItem {
         return arrow;
     }
 
-    /** 矢を 1 本発射し、武器の耐久を 1 減らす。 */
+    /**
+     * 矢を 1 本発射し、武器の耐久を 1 減らす。
+     * マルチショットが付いていれば、バニラのクロスボウと同じように左右 10 度にも撃つ。
+     */
     protected void shootArrow(Level level, Player player, ItemStack weapon, ItemStack ammo,
                               float velocity, float inaccuracy, boolean critical) {
-        AbstractArrow arrow = this.makeArrow(level, player, weapon, ammo, velocity, inaccuracy, critical);
-        level.addFreshEntity(arrow);
+        this.spreadArrows(level, player, weapon, ammo, velocity, inaccuracy, critical, true);
         hurtWeapon(weapon, player, player.getUsedItemHand());
+    }
+
+    /**
+     * マルチショットを反映して矢を発射する（耐久は減らさない）。
+     * 増えた分の矢は回収できない。バニラのクロスボウと同じ扱い。
+     */
+    protected void spreadArrows(Level level, Player player, ItemStack weapon, ItemStack ammo,
+                                float velocity, float inaccuracy, boolean critical, boolean pickup) {
+        level.addFreshEntity(withPickup(
+                this.makeArrow(level, player, weapon, ammo, velocity, inaccuracy, critical, 0.0F), pickup));
+
+        if (weapon.getEnchantmentLevel(Enchantments.MULTISHOT) > 0) {
+            for (float angle : MULTISHOT_ANGLES) {
+                level.addFreshEntity(withPickup(
+                        this.makeArrow(level, player, weapon, ammo, velocity, inaccuracy, critical, angle), false));
+            }
+        }
+    }
+
+    private static AbstractArrow withPickup(AbstractArrow arrow, boolean pickup) {
+        if (!pickup) {
+            arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
+        }
+        return arrow;
+    }
+
+    // ------------------------------------------------------------------
+    // チャージ速度（クイックチャージ）
+    // ------------------------------------------------------------------
+
+    /**
+     * クイックチャージを反映したチャージ速度の倍率。
+     * バニラのクロスボウは 25 ティックが 1 レベルにつき 5 ティック縮むので、それに合わせてある。
+     */
+    public static float chargeSpeed(ItemStack weapon) {
+        int level = Math.min(weapon.getEnchantmentLevel(Enchantments.QUICK_CHARGE), 4);
+        return level <= 0 ? 1.0F : 5.0F / (5 - level);
+    }
+
+    /**
+     * チャージが {@code threshold} ティック分に「このティックで到達したか」。
+     *
+     * <p>クイックチャージで進みが速くなると、単純に {@code useTick == threshold} と書いた判定は
+     * 飛ばされてしまう。前のティックとの間にまたいだかで見ることで、
+     * どんな速度でも各段階がちょうど 1 回ずつ鳴る。
+     */
+    protected static boolean reachedThisTick(ItemStack weapon, int useTick, int threshold) {
+        float speed = chargeSpeed(weapon);
+        return (useTick - 1) * speed < threshold && useTick * speed >= threshold;
+    }
+
+    /** チャージが {@code threshold} ティック分に既に到達しているか。 */
+    protected static boolean reached(ItemStack weapon, int useTick, int threshold) {
+        return useTick * chargeSpeed(weapon) >= threshold;
     }
 
     /** 矢をインベントリから 1 本消費する（無限なら消費しない）。 */
